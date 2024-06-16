@@ -1,16 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
 import './App.css';
-import { fetchPosts } from './api/api';
+import { PostLists } from './components/postLists';
 
 function App() {
-	const { data, isLoading, isError, error, status } = useQuery({
-		queryKey: ['posts'],
-		queryFn: fetchPosts,
-	});
-
-	console.log(data, isLoading, status);
-
-	return <>Hello World!</>;
+	return (
+		<div>
+			<h2 className='title'>My Posts</h2>
+			<PostLists />
+		</div>
+	);
 }
 
 export default App;
