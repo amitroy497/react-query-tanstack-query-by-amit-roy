@@ -1,8 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+	keepPreviousData,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from '@tanstack/react-query';
 import { addPost, fetchPosts, fetchTags } from '../api/api';
+import { useState } from 'react';
 
 export const PostLists = () => {
 	const queryCLient = useQueryClient();
+
+	const [page, setPage] = useState(1);
 
 	const {
 		data: postData,
@@ -10,13 +18,18 @@ export const PostLists = () => {
 		isLoading,
 		error,
 	} = useQuery({
-		queryKey: ['posts'],
-		queryFn: fetchPosts,
+		queryKey: ['posts', { page }],
+		queryFn: () => fetchPosts(page),
+		// gcTime: 0,
+		// refetchInterval: 1000 * 5,
+		staleTime: 1000 * 60 * 5,
+		// placeholderData: keepPreviousData,
 	});
 
 	const { data: tagsData } = useQuery({
 		queryKey: ['tags'],
 		queryFn: fetchTags,
+		staleTime: Infinity,
 	});
 
 	const {
@@ -53,7 +66,7 @@ export const PostLists = () => {
 
 		if (!title || !tags) return;
 
-		mutate({ id: postData.length + 1, title, tags });
+		mutate({ id: postData?.data?.length + 1, title, tags });
 
 		e.target.reset();
 	};
@@ -87,8 +100,31 @@ export const PostLists = () => {
 					<button onClick={() => reset()}>Reset</button>
 				</>
 			)}
-
-			{postData?.map((post) => {
+			<div className='pages'>
+				<button
+					onClick={() =>
+						setPage((oldPage) => {
+							Math.max(oldPage - 1, 0);
+						})
+					}
+					disabled={!postData?.prev}
+				>
+					Previous Page
+				</button>
+				<span>{page}</span>
+				<button
+					onClick={() => {
+						if (postData?.next) {
+							setPage((old) => old + 1);
+						}
+					}}
+					// Disable the Next Page button until we know a next page is available
+					disabled={postData?.next}
+				>
+					Next Page
+				</button>
+			</div>
+			{postData?.data?.map((post) => {
 				return (
 					<div key={post?.id} className='post'>
 						<div>{post?.title}</div>
